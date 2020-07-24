@@ -90,16 +90,15 @@ if __name__ == "__main__":
     parser.add_argument("--tau", default=0.005)                     # Target network update rate
     parser.add_argument("--lmbda", default=0.75)                    # Weighting for clipped double Q-learning in BCQ
     parser.add_argument("--phi", default=0.05)                      # Max perturbation hyper-parameter for BCQ
-    parser.add_argument("--train_behavioral", action="store_true")  # If true, train behavioral (DDPG)
     parser.add_argument("--generate_buffer", action="store_true")   # If true, generate buffer
     parser.add_argument("--output_dir", default="results")
+    parser.add_argument("--device_id", default=0, type=int)      # Mini batch size for networks
+
     args = parser.parse_args()
     # d4rl.set_dataset_path('/datasets')
 
     print("---------------------------------------")
-    if args.train_behavioral:
-        print(f"Setting: Training behavioral, Env: {args.env_name}, Seed: {args.seed}")
-    elif args.generate_buffer:
+    if args.generate_buffer:
         print(f"Setting: Generating buffer, Env: {args.env_name}, Seed: {args.seed}")
     else:
         print(f"Setting: Training BCQ, Env: {args.env_name}, Seed: {args.seed}")
@@ -113,18 +112,15 @@ if __name__ == "__main__":
             'seed': args.seed,
         }, params_file)
 
-    if args.train_behavioral and args.generate_buffer:
-        print("Train_behavioral and generate_buffer cannot both be true.")
-        exit()
 
-    if not os.path.exists("./results"):
-        os.makedirs("./results")
+    if not os.path.exists("results"):
+        os.makedirs("results")
 
-    if not os.path.exists("./models"):
-        os.makedirs("./models")
+    if not os.path.exists("models"):
+        os.makedirs("models")
 
-    if not os.path.exists("./buffers"):
-        os.makedirs("./buffers")
+    if not os.path.exists("buffers"):
+        os.makedirs("buffers")
 
     env = gym.make(args.env_name)
 
@@ -136,9 +132,10 @@ if __name__ == "__main__":
     action_dim = env.action_space.shape[0]
     max_action = float(env.action_space.high[0])
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    if args.train_behavioral or args.generate_buffer:
-        interact_with_environment(env, state_dim, action_dim, max_action, device, args)
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        torch.cuda.set_device(args.device_id)
     else:
-        train_BCQ(env, state_dim, action_dim, max_action, device, args.output_dir, args)
+        device = torch.device("cpu")
+
+    train_BCQ(env, state_dim, action_dim, max_action, device, args.output_dir, args)

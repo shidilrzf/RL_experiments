@@ -9,6 +9,9 @@ output/
 runs/
 logs/
 *.pth
+__pycache__/*
+
+*.save
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
