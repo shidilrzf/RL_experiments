@@ -6,6 +6,8 @@ todo.txt
 data/
 models/
 output/
+/offline/**/results/
+*/models/
 runs/
 logs/
 *.pth
